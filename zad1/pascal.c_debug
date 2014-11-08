@@ -1,0 +1,111 @@
+/*
+ * Systemy Operacyjne
+ * Zadanie zaliczeniowe nr 1
+ * Autor: Paweł Kapica, 334579
+ *
+ * plik pascal.c
+ *
+ */
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include "err.h"
+
+char end_code[] = "end";
+
+int main(int argc, char* argv[])
+{
+	int pipe_dsc1[2], pipe_dsc2[2];
+	long int N = (argc==2) ? strtol(argv[1], NULL, 0) : 0;
+	int i = 1;
+	char tmp[23] = {0x0};
+	char buf[23] = {0x0};
+	long int val;
+	
+	printf("Pascal PID = %d\n", getpid());
+	fflush(stdout);
+	if (N <= 0) {
+		printf("Wrong parameters. Use: 1 parameter n - nth row of Pascal's triangle to calculate.\n");
+		return 0;
+	}
+	
+	if (pipe(pipe_dsc1) == -1)
+		syserr("Error in pipe1");
+	if (pipe(pipe_dsc2) == -1)
+		syserr("Error in pipe2");
+	
+	switch(fork()) {
+		case -1:
+			syserr("Error in fork");
+		
+		case 0:
+// 			printf("%d %d\n",getpid(), getppid());
+			if (dup2(pipe_dsc1[0],0) == -1)
+				syserr("Error in dup");
+			if (dup2(pipe_dsc2[1],1) == -1)
+				syserr("Error in dup");
+			
+			if (close(pipe_dsc1[0]) == -1)
+				syserr("Error in close in %d", getpid());
+			if (close(pipe_dsc1[1]) == -1)
+				syserr("Error in close in %d", getpid());
+			if (close(pipe_dsc2[0]) == -1)
+				syserr("Error in close in %d", getpid());
+			if (close(pipe_dsc2[1]) == -1)
+				syserr("Error in close in %d", getpid());
+			
+			execl("w", "w", (char*) 0);
+			syserr ("child, execl");
+ 			break;
+			
+		default:
+			if (close(pipe_dsc1[0]) == -1)
+				syserr("Error in close in %d", getpid());
+			if (close(pipe_dsc2[1]) == -1)
+				syserr("Error in close in %d", getpid());
+			break;
+	}
+	
+// 	printf("message from %d",getpid());
+// 	fflush(stdout);
+	
+	val = 0;
+	sprintf(buf, "%ld", val);
+	do {
+		if (write(pipe_dsc1[1], buf, sizeof(buf)) == -1)
+			syserr("Error in write in %d", getpid());
+		fprintf(stderr, "pascal czeka na read\n");
+		fflush(stderr);
+		if (read(pipe_dsc2[0], tmp, sizeof(tmp)) == -1)
+			syserr("Error in read in %d", getpid());
+		fprintf(stderr, "pascal dostal %s\n", tmp);
+		fflush(stderr);
+		i++;
+		if (i==N) {
+			if (write(pipe_dsc1[1], end_code, sizeof(end_code)) == -1)
+				syserr("Error in write in %d", getpid());
+			fprintf(stderr, "pascal wyslal end\n");
+		}
+	} while(i<N);
+	
+	
+	for (i = 0; i < N; i++) {
+		if (read(pipe_dsc2[0], tmp, 23) == -1)
+			syserr("Error in read in %d", getpid());
+		fprintf(stderr, "pascal koniec: %s\n", tmp);
+		fflush(stderr);
+	}
+	
+// 	printf("\n");
+// 	fflush(stdout);
+// 	for (i = 0; i<N; i++) {
+// 		printf("%ld ", result[i]);
+// 		fflush(stdout);
+// 	}
+	if (wait(0) == -1)
+		syserr("Error in wait in %d", getpid());
+	
+	return 0;
+}

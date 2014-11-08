@@ -1,0 +1,150 @@
+/*
+ * Systemy Operacyjne
+ * Zadanie zaliczeniowe nr 1
+ * Autor: Paweł Kapica, 334579
+ *
+ * plik w.c
+ *
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <string.h>
+#include "err.h"
+
+char end_code[] = "end";
+
+int main()
+{
+	int pipe_dsc1[2], pipe_dsc2[2];
+	int buf_len;
+	long int val;
+	long int my_val = 1;
+	char buf[23] = {0x0};
+	char tmp[23] = {0x0};
+	int last = 1;
+	int end = 0;
+
+	fprintf(stderr, "W %d\n", getpid());
+ 	fflush(stderr);
+	
+	while (end == 0) {
+		//read from parent
+		if ((buf_len = read (0, buf, sizeof(buf))) == -1)
+			syserr("Error in read in %d", getpid());
+		if (strncmp(buf, end_code, sizeof(end_code)) != 0) { /* calculations continue */
+			val = strtol(buf, NULL, 0);
+			if (last == 0) {
+				sprintf(tmp, "%ld", my_val);
+				fprintf(stderr, "w %d: dostal %ld my_val: %ld\n", getpid(), val, my_val);
+				fflush(stderr);
+				//write to child
+				fprintf(stderr, "w %d: pisze do dziecka %s\n", getpid(), tmp);
+				fflush(stderr);
+				if (write(pipe_dsc1[1], tmp, sizeof(tmp)) == -1)
+					syserr("Error in write in %d", getpid());
+// 				my_val = my_val + val;
+				//read from child
+				if ((buf_len = read (pipe_dsc2[0], buf, sizeof(buf))) == -1)
+					syserr("Error in read in %d", getpid());
+				fprintf(stderr, "w %d: odczytal od dziecka %s\n", getpid(), buf);
+				fflush(stderr);
+				//send to parent
+				fprintf(stderr, "w %d: wysyla do rodzica %s\n", getpid(), buf);
+				fflush(stderr);
+				if (write(1, buf, sizeof(buf)) == -1)
+					syserr("Error in write in %d", getpid());
+			}
+			else { /* last process */
+				//my_val=val;
+				sprintf(tmp, "%ld", my_val);
+				//write to parent
+				fprintf(stderr, "w %d: jest ostatni wysyla: %s val: %ld  my_val: %ld\n", getpid(), tmp, val, my_val);
+				fflush(stderr);
+				if (write(1, tmp, sizeof(tmp)) == -1)
+					syserr("Error in write in %d", getpid());
+				
+				if (pipe(pipe_dsc1) == -1)
+					syserr("Error in pipe1");
+				if (pipe(pipe_dsc2) == -1)
+					syserr("Error in pipe2");
+				
+				switch(fork()) {
+					case -1:
+						syserr("Error in fork\n");
+					case 0:
+						if (dup2(pipe_dsc1[0],0) == -1)
+							syserr("Error in pipe1");
+						if (dup2(pipe_dsc2[1],1) == -1)
+							syserr("Error in pipe2");
+						
+						if (close(pipe_dsc1[0]) == -1)
+							syserr("Error in close in %d", getpid());
+						if (close(pipe_dsc1[1]) == -1)
+							syserr("Error in close in %d", getpid());
+						if (close(pipe_dsc2[0]) == -1)
+							syserr("Error in close in %d", getpid());
+						if (close(pipe_dsc2[1]) == -1)
+							syserr("Error in close in %d", getpid());
+						
+						execl("w", "w", (char*) 0);
+						syserr ("child, execl");
+						
+						break;
+					default:
+						last = 0;
+						if (close(pipe_dsc1[0]) == -1)
+							syserr("Error in close in %d", getpid());
+						if (close(pipe_dsc2[1]) == -1)
+							syserr("Error in close in %d", getpid());
+						break;
+				}
+			}
+			/* update my_val */
+			my_val = my_val + val;
+		}
+		else { /* time to end */
+			end = 1;
+			sprintf(tmp, "%ld", my_val);
+			//write to child
+			if (last == 0) {
+				//send end_code to child
+				if (write(pipe_dsc1[1], end_code, sizeof(end_code)) == -1)
+					syserr("Error in write in %d", getpid());
+				
+				//send my_val to parent
+				if (write(1, tmp, sizeof(tmp)) == -1)
+					syserr("Error in write in %d", getpid());
+				do {
+					if ((buf_len = read (pipe_dsc2[0], buf, sizeof(buf))) == -1)
+						syserr("Error in read in %d", getpid());
+					fprintf(stderr, "w %d: koniec odczytal od dziecka %s\n", getpid(), buf);
+					fflush(stderr);
+					if (write(1, buf, sizeof(buf)) == -1)
+						syserr("Error in write in %d", getpid());
+				} while (strncmp(buf, end_code, sizeof(end_code)) != 0);
+				
+			}
+			else {
+				
+				if (write(1, tmp, sizeof(tmp)) == -1)
+					syserr("Error in write in %d", getpid());
+				if (write(1, end_code, sizeof(end_code)) == -1)
+					syserr("Error in write in %d", getpid());
+				
+			}
+		}
+	}
+	
+	fprintf(stderr, "w %d: wyszedl z petli my_val: %ld\n",getpid(), my_val);
+	fflush(stderr);
+	
+	if (last == 0) {
+		if (wait(0) == -1)
+			syserr("Error in wait in %d", getpid());
+	}
+	return 0;
+}

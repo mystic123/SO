@@ -1,0 +1,117 @@
+/*
+ * Systemy Operacyjne
+ * Zadanie zaliczeniowe nr 1
+ * Autor: Paweł Kapica, 334579
+ *
+ * plik pascal.c
+ *
+ */
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include "err.h"
+
+int main(int argc, char* argv[])
+{
+	int pipe_dsc1[2], pipe_dsc2[2];
+	long int N = (argc==2) ? strtol(argv[1], NULL, 0) : 0;
+	int i = 0;
+	
+	printf("Moj PID = %d\n", getpid());
+	
+	if (N <= 0) {
+		printf("Wrong parameters. Use: 1 parameter n - nth row of Pascal's triangle to calculate.\n");
+		return 0;
+	}
+	
+	if (pipe(pipe_dsc1) == -1)
+		syserr("Error in pipe1\n");
+	if (pipe(pipe_dsc2) == -1)
+		syserr("Error in pipe2\n");
+	
+	if (dup2(pipe_dsc2[0],0) == -1)
+		syserr("Error in dup");
+	if (dup2(pipe_dsc2[1],1) == -1)
+		syserr("Error in dup");
+	
+	if (close(pipe_dsc2[0]) == -1)
+		syserr("Error in close in %d", getpid());
+	if (close(pipe_dsc2[1]) == -1)
+		syserr("Error in close in %d", getpid());
+	
+	for (i = 0; i < N; i++) {
+		if (pipe(pipe_dsc1) == -1)
+			syserr("Error in pipe1\n");
+		if (pipe(pipe_dsc2) == -1)
+			syserr("Error in pipe2\n");
+		
+		switch(fork()) {
+			case -1:
+				syserr("Error in fork\n");
+			
+			case 0:
+				printf("%d %d\n",getpid(), getppid());
+				if (dup2(pipe_dsc2[0],0) == -1)
+					syserr("Error in dup");
+				if (dup2(pipe_dsc1[1],4) == -1)
+					syserr("Error in dup");
+				
+				if (close(pipe_dsc2[0]) == -1)
+					syserr("Error in close in %d", getpid());
+				if (close(pipe_dsc2[1]) == -1)
+					syserr("Error in close in %d", getpid());
+				if (close(pipe_dsc1[0]) == -1)
+					syserr("Error in close in %d", getpid());
+				if (close(pipe_dsc1[1]) == -1)
+					syserr("Error in close in %d", getpid());
+				
+				/*
+				if (i==N-1) {
+					if (close(1) == -1)
+						syserr("Error in close in %d", getpid());
+					if (close(3) == -1)
+						syserr("Error in close in %d", getpid());
+				}*/
+				
+				execl("w", "w", (char*) 0);
+				syserr ("child, execvp");
+ 				break;
+				
+			default:
+				if (dup2(pipe_dsc2[1],1) == -1)
+					syserr("Error in dup");
+				if (dup2(pipe_dsc1[0],3) == -1)
+					syserr("Error in dup");
+				
+				/*
+				if (i==0) {
+					if (close(0) == -1)
+						syserr("Error in close in %d", getpid());
+					if (close(7) == -1)
+						syserr("Error in close in %d", getpid());
+				}*/
+				
+				if (close(pipe_dsc2[0]) == -1)
+					syserr("Error in close in %d", getpid());
+				if (close(pipe_dsc2[1]) == -1)
+					syserr("Error in close in %d", getpid());
+				if (close(pipe_dsc1[0]) == -1)
+					syserr("Error in close in %d", getpid());
+				if (close(pipe_dsc1[1]) == -1)
+					syserr("Error in close in %d", getpid());
+				
+				break;
+		}
+	}
+	
+ 	//if (write(pipe_dsc2[1], "message from pascal\0", 20) == -1)
+ 	//	syserr("Error in write in %d\n", getpid());
+	printf("message from %d\0",getpid());
+	for (i=0; i< N; i++)
+	if (wait(0) == -1)
+		syserr("Error in wait\n");
+	
+	return 0;
+}

@@ -1,0 +1,17 @@
+/*
+ * Systemy Operacyjne
+ * Zadanie zaliczeniowe nr 1
+ * Autor: Paweł Kapica, 334579
+ *
+ * plik opis.txt
+ *
+ */
+
+Opis protokołu komunikacyjnego:
+Proces macierzysty komunikuje się z procesem potomnym przez utworzone przez siebie deskryptory. Proces potomny komunikuje się ze swoim procesem macierzystym przez standarowe wejście/wyjście.
+
+Obliczenia przebiegają w następujący sposób:
+1) Właściwe obliczenia:
+	Proces otrzymuje od swojego procesu macierzystego starą wartość jego współczynnika. Wysyła do swojego potomka starą wartość swojego współczynnika a następnie uaktualnia swój współczynnik. (zgodnie ze specyfikacją) Proces pascal zawsze wysyła swojemu potomkowi "0", aby nie utrudniać kodu. Obliczenia przebiegają w ten sposób przez n kroków. Na koniec proces pascal wysyła swojemu potomkowi sygnał końca (end_code). Procesy potomne przekazują sobie ten sygnał aż do ostatniego.
+2) Przekazywanie obliczonych współczynników do procesu pascal:
+	Po nadejściu sygnału końca, procesy potomne przekazują wartość swojego współczynnika do swojego procesu macierzystego. Następnie w pętli przekazują współczynniki swoich potomków do procesu macierzystego aż ponownie dojdzie do nich sygnał końca (tym razem wysłany przez ostatniego potomka). Jak można zauważyć end_code robi pętlę przechodząc przez wszystkie procesy 2 razy i wracając do procesu pascal.

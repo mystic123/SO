@@ -1,0 +1,51 @@
+fprintf(stderr, "w %d: wchodzi do else\n", getpid());
+			fflush(stderr);
+			end = 1;
+			sprintf(tmp, "%ld", my_val);
+			/* sending my_val to parent */
+			/*if (write(1, tmp, sizeof(tmp)) == -1)
+				syserr("Error in write in %d", getpid());
+			if (last == 0) {
+				
+				do {
+					fprintf(stderr, "w %d: w dowhile\n", getpid());
+					fflush(stderr);
+					//read from child
+					if ((buf_len = read (pipe_dsc2[0], buf, 1024 - 1)) == -1)
+						syserr("Error in read in %d", getpid());
+					fprintf(stderr, "w %d: pisze do ojca %s\n", getpid(), buf);
+					fflush(stderr);
+					//write to parent
+					if (write(1, buf, sizeof(buf)) == -1)
+						syserr("Error in write in %d", getpid());
+				} while(strncmp(buf, end_code, sizeof(end_code)) != 0);
+				//read from child
+// 				if ((buf_len = read (pipe_dsc2[0], buf, 1024 - 1)) == -1)
+// 					syserr("Error in read in %d", getpid());
+			}
+			else {
+				fprintf(stderr, "w %d: last pisze do ojca %s\n", getpid(), buf);
+				fflush(stderr);*/
+				/* sending end_code to parent */
+// 				if (write(1, end_code, sizeof(end_code)) == -1)
+// 					syserr("Error in write in %d", getpid());
+// 			}
+		}
+
+
+
+-------------------
+
+
+else { /* time to end */
+			end = 1;
+			//write to child
+			if (last == 0) {
+				if (write(pipe_dsc1[1], buf, sizeof(buf)) == -1)
+					syserr("Error in write in %d", getpid());
+				//read from child
+// 				if ((buf_len = read (pipe_dsc2[0], buf, 1024 - 1)) == -1)
+// 					syserr("Error in read in %d", getpid());
+			}
+			
+		}
