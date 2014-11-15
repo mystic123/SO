@@ -119,6 +119,6 @@ int main()
 		if (wait(0) == -1)
 			syserr("Error in wait in %d", getpid());
 	}
-
+	
 	return 0;
 }
