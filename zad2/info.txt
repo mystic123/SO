@@ -1,0 +1,16 @@
+/*
+ * Systemy Operacyjne
+ * Zadanie zaliczeniowe nr 2
+ * Autor: Paweł Kapica, 334579
+ *
+ * plik info.txt
+ *
+ */
+
+W większości miejsc stosuję nazwy zmiennych odpowiadające nazwom z treści zadania. W miejscach, w których zmieniam ich znaczenie jest to podyktowane oszczędnością kodu i nie mnożeniem niepotrzebnych typów.
+
+Aplikacja wykorzystuje 4 kolejki IPC:
+Kolejka o kluczu HELLOKEY, na którą komisje i raporty wysyłają pierwsze komunikaty ze swoimi danymi. Serwer odczytuje wiadomości z tej kolejki i tworzy wątki (lub odrzuca jeśli dane są niepoprawne).
+Kolejka o kluczu RRKEY, na którą serwer wysyła dane przeznaczone dla raportów.
+Kolejka o kluczu CSKEY, na którą komisje wysyłają wyniki głosowania.
+Kolejka o kluczu CRKEY, na którą serwer wysyła komunikaty dla komisji.
