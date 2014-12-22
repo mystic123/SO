@@ -38,7 +38,6 @@ list* connected_reports = NULL;
 int L,K,M;
 
 /* synchronization */
-
 pthread_attr_t attr;
 pthread_mutex_t list_mutex;
 pthread_rwlock_t rwlock;
@@ -71,8 +70,8 @@ void *handle_com(void *data)
 		for (j = 0; j < MAXK; j++)
 			comm_data[i][j] = 0;
 		
-		/* send response to commitee */
-		r_msg.msg_type = m+OFFSET;
+	/* send response to commitee */
+	r_msg.msg_type = m+OFFSET;
 	r_msg.w = 1;
 	entries = 0;
 	if ((err = msgsnd(msgq[1], &r_msg, sizeof(com_r_msg) - sizeof(long), 0)) != 0)
@@ -101,7 +100,7 @@ void *handle_com(void *data)
 		for (j = 0; j < MAXK; j++)
 			completed[i][j] += comm_data[i][j];
 		
-		valid_votes += val_votes;
+	valid_votes += val_votes;
 	invalid_votes += voted - val_votes;
 	perm_to_vote += p_to_vote;
 	completed_comm++;
@@ -111,14 +110,14 @@ void *handle_com(void *data)
 	r_msg.w = entries;
 	r_msg.sumn = valid_votes;
 	
+	if ((err = pthread_rwlock_unlock(&rwlock)) != 0)
+		syserr (err, "unlock failed");
+	pthread_cleanup_pop(0);
+	
 	if ((err = msgsnd(msgq[1], &r_msg, sizeof(com_r_msg) - sizeof(long), 0)) != 0)
 		syserr(err, "msgsnd");
 	
 	connected_comm[d_msg.m-1] = -1;
-	
-	if ((err = pthread_rwlock_unlock(&rwlock)) != 0)
-		syserr (err, "unlock failed");
-	pthread_cleanup_pop(0);
 	
 	return (void*)m;
 }
@@ -276,6 +275,7 @@ int main(int argc, char* argv[])
 		syserr (err, "rwlock init failed");
 	
 	while(1) {
+		/* read hello message */
 		if ((n = msgrcv(msgq[2], &d_msg, sizeof(data_msg) - sizeof(long), HELLOMSG, 0)) <= 0)
 			syserr(errno, "msgrcv\n");
 		

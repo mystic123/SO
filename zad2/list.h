@@ -4,6 +4,7 @@
  * Autor: Paweł Kapica, 334579
  *
  * plik list.h
+ * Implementacja listy
  *
  */
 #ifndef LISTH

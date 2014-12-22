@@ -14,3 +14,5 @@ Kolejka o kluczu HELLOKEY, na którą komisje i raporty wysyłają pierwsze komu
 Kolejka o kluczu RRKEY, na którą serwer wysyła dane przeznaczone dla raportów.
 Kolejka o kluczu CSKEY, na którą komisje wysyłają wyniki głosowania.
 Kolejka o kluczu CRKEY, na którą serwer wysyła komunikaty dla komisji.
+
+Do synchronizacji wykorzystuje blokadę rwlock oraz mutex na zmienne globalne.

@@ -3,7 +3,7 @@
  * Zadanie zaliczeniowe nr 2
  * Autor: Paweł Kapica, 334579
  *
- * plik globa.h
+ * plik global.h
  *
  */
 #ifndef GLOBALH
